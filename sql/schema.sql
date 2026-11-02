@@ -4,6 +4,21 @@ CREATE DATABASE IF NOT EXISTS financial_risk
 
 USE financial_risk;
 
+CREATE TABLE IF NOT EXISTS App_Users (
+    User_ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Username VARCHAR(120) NOT NULL,
+    Password_Hash VARCHAR(255) NOT NULL,
+    Role ENUM('Administrator', 'Stakeholder', 'User') NOT NULL,
+    Is_Active BOOLEAN NOT NULL DEFAULT TRUE,
+    Created_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Updated_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (User_ID),
+    UNIQUE KEY uq_app_users_username (Username),
+    KEY idx_app_users_role (Role),
+    KEY idx_app_users_active (Is_Active)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS Stg_Financial_Statement (
     Staging_ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     Ticker_Code VARCHAR(20) NOT NULL,

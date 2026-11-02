@@ -22,6 +22,19 @@ def test_mysql_schema_matches_metadata_contract():
         assert definition in schema
 
 
+def test_schema_contains_persistent_user_table():
+    schema = Path("sql/schema.sql").read_text(encoding="utf-8")
+    for definition in [
+        "CREATE TABLE IF NOT EXISTS App_Users",
+        "Username VARCHAR(120)",
+        "Password_Hash VARCHAR(255)",
+        "Role ENUM('Administrator', 'Stakeholder', 'User')",
+        "Is_Active BOOLEAN",
+        "UNIQUE KEY uq_app_users_username",
+    ]:
+        assert definition in schema
+
+
 def test_schema_is_non_destructive():
     schema = Path("sql/schema.sql").read_text(encoding="utf-8").upper()
     assert "DROP DATABASE" not in schema
