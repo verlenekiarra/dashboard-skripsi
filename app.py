@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-import os
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.analytics.beneish import AnalysisConfig, BASELINE_THRESHOLD, SENSITIVITY_THRESHOLD, analyze
-from src.auth.permissions import authenticate, create_user, ensure_admin_user, allowed
+from src.auth.permissions import authenticate, allowed, create_user, ensure_admin_user
 from src.data.database import create_mysql_engine
 from src.data.io import export_csv, export_excel, read_upload, read_workbook_long
 from src.data.repository import load_analysis, load_staging, read_analysis
@@ -78,25 +78,41 @@ p, span, label { color: var(--text-muted); }
 .user-role { font-size: .85rem; font-weight: 600; color: var(--text); }
 .user-scope { font-size: .7rem; color: var(--text-muted); }
 div[data-testid="stForm"] { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
-.stButton>button { min-height: 44px; background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 9px; font-weight: 600; padding: .5rem 1.25rem; }
+.stButton>button { min-height: 44px; background: var(--btn-bg); color: var(--btn-fg) !important; border: none; border-radius: 9px; font-weight: 600; padding: .5rem 1.25rem; }
 .stButton>button:hover { background: var(--btn-hover); color: var(--btn-fg); }
+.stButton>button p, .stButton>button span { color: inherit !important; }
 .nav-control [data-baseweb="segmented-control"] { width: 100%; background: var(--surface-alt); border: 1px solid var(--border); padding: .2rem; border-radius: 9px; }
 .nav-control [data-baseweb="segment"] { min-height: 34px; color: var(--text-muted); font-size: .78rem; }
 .nav-control [data-baseweb="segment"][aria-checked="true"] { background: var(--primary); color: #173B73; }
 .sidebar-brand { padding: .4rem .7rem 1.25rem; color: var(--text); font-weight: 700; font-size: 1.05rem; }
 .sidebar-label { padding: 1.1rem .7rem .35rem; color: var(--text-muted); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-.stDownloadButton>button { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.stSelectbox>div>div, .stMultiSelect>div>div, .stTextInput input, [data-baseweb="input"], [data-baseweb="select"]>div { background: var(--input-bg) !important; color: var(--text) !important; border: 1px solid var(--input-outline) !important; border-radius: 8px; }
+.stDownloadButton>button { background: var(--surface); color: var(--text) !important; border: 1px solid var(--border); }
+.stSelectbox>div>div, .stMultiSelect>div>div, .stTextInput input, [data-baseweb="input"], [data-baseweb="select"]>div { background: var(--input-bg) !important; color: var(--input-text) !important; border: 1px solid var(--input-outline) !important; border-radius: 8px; }
+.stTextInput input::placeholder { color: var(--input-text) !important; opacity: .7; }
 [data-baseweb="popover"], [data-baseweb="menu"], [role="listbox"] { background: var(--surface) !important; color: var(--text) !important; }
+[data-baseweb="popover"] *, [data-baseweb="menu"] *, [role="listbox"] *, [data-baseweb="select"] * { color: var(--input-text) !important; }
+[data-baseweb="select"] [data-testid="stMarkdownContainer"], [data-baseweb="select"] [class*="placeholder"], [data-baseweb="select"] input::placeholder { color: var(--input-text) !important; opacity: .78 !important; }
+.stTextInput input, .stNumberInput input, .stDateInput input, .stTextArea textarea,
+[data-baseweb="input"] input, [data-baseweb="base-input"] input, [data-baseweb="textarea"] textarea,
+[data-baseweb="select"] [data-baseweb="input"] input { color: var(--input-text) !important; -webkit-text-fill-color: var(--input-text) !important; caret-color: var(--input-text) !important; }
+[data-baseweb="input"] input::placeholder, [data-baseweb="base-input"] input::placeholder, [data-baseweb="textarea"] textarea::placeholder { color: var(--input-text) !important; -webkit-text-fill-color: var(--input-text) !important; opacity: .7 !important; }
+[data-baseweb="select"] [class*="singleValue"], [data-baseweb="select"] [class*="SingleValue"] { color: var(--input-text) !important; -webkit-text-fill-color: var(--input-text) !important; }
+.stMultiSelect [data-baseweb="tag"], span[data-baseweb="tag"], [data-baseweb="tag"] { background: var(--tag-bg) !important; background-color: var(--tag-bg) !important; border-color: var(--tag-bg) !important; color: var(--tag-text) !important; -webkit-text-fill-color: var(--tag-text) !important; }
+.stMultiSelect [data-baseweb="tag"] *, span[data-baseweb="tag"] *, [data-baseweb="tag"] *, [data-baseweb="tag"] svg { color: var(--tag-text) !important; fill: var(--tag-text) !important; -webkit-text-fill-color: var(--tag-text) !important; }
+[aria-selected="true"], [data-baseweb="option"][aria-selected="true"] { background: var(--option-bg) !important; color: var(--option-text) !important; -webkit-text-fill-color: var(--option-text) !important; }
 .stAlert { background: var(--surface-alt); border-color: var(--border); }
+.stAlert [data-testid="stAlertContent"] { color: var(--text) !important; }
+.stAlert[data-testid="stAlert"] { color: var(--text) !important; background: var(--surface-alt) !important; border-color: var(--border-strong) !important; }
+.stAlert[data-testid="stAlert"] svg { color: var(--primary) !important; fill: var(--primary) !important; }
+.stException { background: var(--surface-alt); color: var(--text); }
 .stDownloadButton>button { border-color: var(--border-strong); }
 :focus-visible { outline: 2px solid var(--primary) !important; outline-offset: 2px !important; }
 </style>
 """, unsafe_allow_html=True)
 
 THEME_TOKENS = {
-    "light": "--bg:#f8fafc;--surface:#ffffff;--surface-alt:#eef6ff;--border:#c8d7e8;--border-strong:#9bb3cc;--text:#173b73;--text-muted:#365985;--primary:#bde0fe;--accent-soft:#e7f3ff;--input-bg:#ffffff;--input-outline:#9bb3cc;--btn-bg:#bde0fe;--btn-fg:#173b73;--btn-hover:#a7d3f5;",
-    "dark": "--bg:#0b1f3a;--surface:#102d55;--surface-alt:#173b73;--border:#315783;--border-strong:#6b93c4;--text:#f4f8ff;--text-muted:#c9d9ef;--primary:#bde0fe;--accent-soft:#173b73;--input-bg:#dff0ff;--input-outline:#ffffff;--btn-bg:#bde0fe;--btn-fg:#173b73;--btn-hover:#d5ecff;",
+    "light": "--bg:#e7f3ff;--surface:#ffffff;--surface-alt:#d9edff;--border:#b8d4ed;--border-strong:#8fb5d8;--text:#173b73;--text-muted:#365985;--primary:#bde0fe;--accent-soft:#d9edff;--input-bg:#ffffff;--input-text:#173b73;--input-outline:#9bb3cc;--tag-bg:#173b73;--tag-text:#ffffff;--option-bg:#bde0fe;--option-text:#173b73;--btn-bg:#bde0fe;--btn-fg:#173b73;--btn-hover:#a7d3f5;",
+    "dark": "--bg:#0b1f3a;--surface:#173b73;--surface-alt:#102d55;--border:#315783;--border-strong:#6b93c4;--text:#ffffff;--text-muted:#d6e5f7;--primary:#bde0fe;--accent-soft:#102d55;--input-bg:#2b5a96;--input-text:#ffffff;--input-outline:#ffffff;--tag-bg:#173b73;--tag-text:#ffffff;--option-bg:#2b5a96;--option-text:#ffffff;--btn-bg:#bde0fe;--btn-fg:#173b73;--btn-hover:#d5ecff;",
 }
 st.markdown(f"<style>:root {{{THEME_TOKENS.get(ACTIVE_THEME, THEME_TOKENS['light'])}}}</style>", unsafe_allow_html=True)
 
@@ -132,6 +148,8 @@ def chart_palette() -> dict:
         pass
     return CHART_LIGHT
 
+
+ROLE_OPTIONS = ["Administrator", "Stakeholder", "User"]
 
 NAV_BY_ROLE: dict[str, list[str]] = {
     "Administrator": ["Overview", "Beneish M-Score", "Anomaly Detection", "Risk Assessment", "Company Analysis", "Analysis Results", "Data Management", "Upload Financial Data", "User Management"],
@@ -172,9 +190,9 @@ def render_login() -> str | None:
         ensure_admin_user(create_mysql_engine())
     except (OSError, ValueError, RuntimeError, SQLAlchemyError):
         pass
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        st.markdown("Financial Risk Analytics")
+    column_left, column_center, column_right = st.columns([1, 1.5, 1])
+    with column_center:
+        st.markdown("### Manipulation Fraud Risk Dashboard")
         st.caption("Dashboard analitik risiko manipulasi laporan keuangan")
         with st.form("login_form"):
             username = st.text_input("Username")
@@ -186,8 +204,6 @@ def render_login() -> str | None:
                 st.session_state["authenticated_role"] = role
                 st.rerun()
             st.error("Username atau password tidak valid.")
-        if not os.getenv("APP_USERS_JSON"):
-            st.markdown('', unsafe_allow_html=True)
     return None
 
 
@@ -208,7 +224,6 @@ def render_sidebar(role: str) -> str:
         st.markdown('</div>', unsafe_allow_html=True)
         page = page or current
         st.session_state["active_page"] = page
-        st.markdown('<div class="sidebar-label">Account</div>', unsafe_allow_html=True)
         if allowed(role, "export") and "analysis_data" in st.session_state:
             st.markdown('<p class="section-title">Export</p>', unsafe_allow_html=True)
             export_frame = st.session_state["analysis_data"]
@@ -220,8 +235,8 @@ def render_sidebar(role: str) -> str:
 def render_header(data: pd.DataFrame, role: str, page: str) -> pd.DataFrame:
     title, year_col, company_col, user_col = st.columns([2.1, 1.2, 1.5, 1.1])
     with title:
-        st.markdown("### Analytical Dashboard")
-        st.caption(f"{page} · Threshold {BASELINE_THRESHOLD}")
+        st.markdown("### Manipulation Fraud Risk Dashboard")
+        st.caption(page)
     with year_col:
         years = sorted(data["FiscalYear"].dropna().astype(int).unique().tolist())
         selected_years = st.multiselect("Year", years, default=years, placeholder="Filter by year")
@@ -254,7 +269,6 @@ def render_header(data: pd.DataFrame, role: str, page: str) -> pd.DataFrame:
     if selected_statuses:
         active.append(f"{len(selected_statuses)} status(es)")
     st.caption("Active filter: " + (", ".join(active) if active else "none"))
-    st.caption(f"Data source: {st.session_state.get('data_source', 'Unknown')}")
     return filtered
 
 
@@ -478,6 +492,7 @@ def render_upload_page(role: str) -> None:
         st.error("Akses ditolak. User tidak dapat mengunggah data.")
         return
     st.caption("Format: XLSX, XLS, atau CSV. File divalidasi dan ditampilkan sebelum diproses.")
+    st.info("Upload minimal 2 tahun laporan untuk setiap perusahaan. Perhitungan indeks Beneish membutuhkan tahun pembanding.")
     uploaded = st.file_uploader("Financial statement workbook", type=["xlsx", "xls", "csv"])
     if uploaded is None:
         st.info("Pilih file untuk melihat preview. Database belum berubah.")
@@ -518,10 +533,11 @@ def render_user_management(role: str) -> None:
     if not allowed(role, "manage_accounts"):
         st.error("Akses ditolak. Hanya Administrator dapat mengelola akun.")
         return
+    from src.auth.permissions import hash_password
     st.caption("Daftarkan akun baru beserta rolenya. Password disimpan sebagai hash PBKDF2.")
     with st.form("create_user"):
         username = st.text_input("Username")
-        new_role = st.selectbox("Role", ["Stakeholder", "User", "Administrator"])
+        new_role = st.selectbox("Role", ROLE_OPTIONS, index=2)
         password = st.text_input("Password sementara", type="password")
         submitted = st.form_submit_button("Create account")
     if submitted:
@@ -533,6 +549,81 @@ def render_user_management(role: str) -> None:
             st.success(f"Akun {username} tersimpan sebagai {new_role}.")
         except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
             st.error(f"Akun gagal disimpan: {exc}")
+    st.markdown('<p class="section-title">Existing accounts</p>', unsafe_allow_html=True)
+    try:
+        engine = create_mysql_engine()
+        with engine.connect() as connection:
+            users = connection.execute(text("""
+                SELECT User_ID, Username, Role, Is_Active
+                FROM App_Users
+                WHERE Username <> 'admin'
+                ORDER BY Username
+            """)).mappings().all()
+    except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
+        st.error(f"Daftar akun gagal dimuat: {exc}")
+        return
+
+    if not users:
+        st.info("Belum ada akun selain admin. Buat akun baru pada form di atas.")
+        return
+
+    accounts = {user["Username"]: user for user in users}
+    selected_username = st.selectbox("Pilih username", list(accounts.keys()))
+    account = accounts[selected_username]
+    user_id = int(account["User_ID"])
+    current_role = account["Role"]
+    active = bool(account["Is_Active"])
+
+    info_username, info_role, info_status = st.columns(3)
+    info_username.metric("Username", selected_username)
+    info_role.metric("Role", current_role)
+    info_status.metric("Status", "Active" if active else "Inactive")
+
+    with st.form(f"edit_user_{user_id}"):
+        edited_role = st.segmented_control("Ubah role", ROLE_OPTIONS, default=current_role, key=f"role_{user_id}")
+        reset_password = st.text_input("Password baru (opsional)", type="password", key=f"password_{user_id}")
+        save = st.form_submit_button("Save changes")
+    if save:
+        try:
+            values = {"user_id": user_id, "role": edited_role or current_role}
+            password_clause = ""
+            if reset_password:
+                password_clause = ", Password_Hash = :password_hash"
+                values["password_hash"] = hash_password(reset_password)
+            with engine.begin() as connection:
+                connection.execute(text(f"""
+                    UPDATE App_Users
+                    SET Role = :role{password_clause}
+                    WHERE User_ID = :user_id AND Username = :username
+                """), {**values, "username": selected_username})
+            st.success(f"Akun {selected_username} diperbarui.")
+            st.rerun()
+        except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
+            st.error(f"Akun gagal diperbarui: {exc}")
+
+    action = "Enable account" if not active else "Disable account"
+    if st.button(action, key=f"active_{user_id}"):
+        with engine.begin() as connection:
+            connection.execute(text("""
+                UPDATE App_Users
+                SET Is_Active = :active
+                WHERE User_ID = :user_id AND Username = :username
+            """), {"active": not active, "user_id": user_id, "username": selected_username})
+        st.rerun()
+
+    confirm_delete = st.checkbox(f"Konfirmasi hapus permanen akun {selected_username}", key=f"confirm_delete_{user_id}")
+    if st.button("Delete user", key=f"delete_{user_id}", disabled=not confirm_delete):
+        try:
+            with engine.begin() as connection:
+                connection.execute(text("""
+                    DELETE FROM App_Users
+                    WHERE User_ID = :user_id AND Username = :username
+                """), {"user_id": user_id, "username": selected_username})
+            st.success(f"Akun {selected_username} dihapus.")
+            st.rerun()
+        except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
+            st.error(f"Akun belum dapat dihapus. Hak DELETE database belum tersedia: {exc}")
+    st.caption("Disable menutup akses tetapi data akun tetap ada. Delete menghapus akun permanen dan tidak bisa dibatalkan.")
 
 
 def main() -> None:
@@ -545,7 +636,7 @@ def main() -> None:
         return
     data = load_data()
     if data.empty:
-        st.markdown("### Analytical Dashboard")
+        st.markdown("### Manipulation Fraud Risk Dashboard")
         st.info("Belum ada data. Upload workbook untuk memulai.")
         st.markdown('<div class="note-box">Hasil analisis adalah indikasi screening awal, bukan bukti fraud.</div>', unsafe_allow_html=True)
         return

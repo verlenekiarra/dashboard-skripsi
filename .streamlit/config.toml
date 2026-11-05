@@ -1,0 +1,12 @@
+[theme]
+primaryColor = "#173B73"
+
+[theme.light]
+backgroundColor = "#E7F3FF"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#173B73"
+
+[theme.dark]
+backgroundColor = "#0B1F3A"
+secondaryBackgroundColor = "#173B73"
+textColor = "#FFFFFF"

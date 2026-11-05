@@ -118,3 +118,37 @@ def create_user(engine, username: str, password: str, role: str) -> None:
             "password_hash": hash_password(password),
             "role": role,
         })
+
+
+def list_users(engine):
+    with engine.connect() as connection:
+        return connection.execute(text("""
+            SELECT User_ID, Username, Role, Is_Active, Created_At, Updated_At
+            FROM App_Users
+            ORDER BY Username
+        """)).mappings().all()
+
+
+def update_user(engine, user_id: int, role: str, password: str = "") -> None:
+    if role not in VALID_ROLES:
+        raise ValueError("Role tidak valid.")
+    values = {"user_id": user_id, "role": role}
+    password_clause = ""
+    if password:
+        password_clause = ", Password_Hash = :password_hash"
+        values["password_hash"] = hash_password(password)
+    with engine.begin() as connection:
+        connection.execute(text(f"""
+            UPDATE App_Users
+            SET Role = :role{password_clause}
+            WHERE User_ID = :user_id
+        """), values)
+
+
+def set_user_active(engine, user_id: int, active: bool) -> None:
+    with engine.begin() as connection:
+        connection.execute(text("""
+            UPDATE App_Users
+            SET Is_Active = :active
+            WHERE User_ID = :user_id
+        """), {"active": active, "user_id": user_id})
