@@ -75,6 +75,12 @@ div[data-testid="stForm"] { background: var(--surface); border: 1px solid var(--
 .stButton>button { min-height: 44px; background: var(--btn-bg); color: var(--btn-fg) !important; border: none; border-radius: 9px; font-weight: 600; padding: .5rem 1.25rem; }
 .stButton>button:hover { background: var(--btn-hover); color: var(--btn-fg); }
 .stButton>button p, .stButton>button span { color: inherit !important; }
+.st-key-data-management-delete button { background: #b42318 !important; color: #ffffff !important; border: none !important; }
+.st-key-data-management-delete button:hover { background: #8f1d14 !important; color: #ffffff !important; }
+.st-key-data-management-delete button p, .st-key-data-management-delete button span { color: #ffffff !important; }
+.st-key-data-management-delete-all button { background: #b42318 !important; color: #ffffff !important; border: none !important; }
+.st-key-data-management-delete-all button:hover { background: #8f1d14 !important; color: #ffffff !important; }
+.st-key-data-management-delete-all button p, .st-key-data-management-delete-all button span { color: #ffffff !important; }
 .nav-control [data-baseweb="segmented-control"] { width: 100%; background: var(--surface-alt); border: 1px solid var(--border); padding: .2rem; border-radius: 9px; }
 .nav-control [data-baseweb="segment"] { min-height: 34px; color: var(--text-muted); font-size: .78rem; }
 .nav-control [data-baseweb="segment"][aria-checked="true"] { background: var(--primary); color: #173B73; }

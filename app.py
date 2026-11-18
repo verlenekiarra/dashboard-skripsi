@@ -14,6 +14,7 @@ from src.ui.data_loader import load_data
 from src.ui.pages.anomaly_detection import render_anomaly_page
 from src.ui.pages.beneish import render_beneish_page
 from src.ui.pages.company_analysis import render_company_analysis
+from src.ui.pages.data_management import render_data_management
 from src.ui.pages.overview import render_overview
 from src.ui.pages.placeholder import render_placeholder_page
 from src.ui.pages.risk_assessment import render_risk_assessment
@@ -64,7 +65,7 @@ def main() -> None:
     elif page == "Upload History":
         render_placeholder_page("Upload History", "Upload history requires an Upload_History table. Database migration belum ditambahkan.")
     elif page == "Data Management":
-        render_placeholder_page("Data Management", "Data management requires audit logging and explicit delete/update confirmation.")
+        render_data_management(analyzed, role)
     elif page == "User Management":
         render_user_management(role)
     st.markdown('<div class="note-box">Status screening membantu memprioritaskan review. Status apa pun tidak membuktikan fraud.</div>', unsafe_allow_html=True)
