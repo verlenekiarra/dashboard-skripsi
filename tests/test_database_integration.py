@@ -1,11 +1,15 @@
 import os
 
 import pytest
+from dotenv import load_dotenv
 from sqlalchemy import inspect, text
 
 from src.data.database import create_mysql_engine
 from src.data.repository import read_analysis
 
+
+load_dotenv(".env.supabase", override=False)
+load_dotenv(".env", override=False)
 
 pytestmark = pytest.mark.skipif(
     not all(os.getenv(name) for name in ("DB_NAME", "DB_USER", "DB_PASSWORD")),

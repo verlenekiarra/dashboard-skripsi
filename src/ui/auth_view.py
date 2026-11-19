@@ -24,6 +24,10 @@ def render_login() -> str | None:
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
             submitted = st.form_submit_button("Sign in", width="stretch")
+        st.caption(
+            "Pengguna Stakeholder atau User yang memerlukan akses data dan dashboard "
+            "dapat mengirimkan email ke verlenekiarra@gmail.com dengan menjelaskan kepentingannya."
+        )
         if submitted:
             role = authenticate(username, password)
             if role:
