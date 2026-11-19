@@ -35,7 +35,7 @@ def authenticate(username: str, password: str) -> str | None:
         with engine.connect() as connection:
             record = connection.execute(
                 text("""
-                    SELECT Password_Hash, Role
+                    SELECT password_hash AS "Password_Hash", role AS "Role"
                     FROM App_Users
                     WHERE Username = :username AND Is_Active = TRUE
                 """),

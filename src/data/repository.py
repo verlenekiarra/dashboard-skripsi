@@ -31,6 +31,12 @@ def load_staging(engine: Engine, frame: pd.DataFrame) -> int:
         INSERT INTO Stg_Financial_Statement
             (Ticker_Code, Statement_Name, Item_Name, Fiscal_Year, Value)
         VALUES (:Ticker_Code, :Statement_Name, :Item_Name, :Fiscal_Year, :Value)
+        ON CONFLICT (Ticker_Code, Statement_Name, Item_Name, Fiscal_Year)
+        DO UPDATE SET Value = EXCLUDED.Value, Loaded_At = CURRENT_TIMESTAMP
+    """ if engine.dialect.name == "postgresql" else """
+        INSERT INTO Stg_Financial_Statement
+            (Ticker_Code, Statement_Name, Item_Name, Fiscal_Year, Value)
+        VALUES (:Ticker_Code, :Statement_Name, :Item_Name, :Fiscal_Year, :Value)
         ON DUPLICATE KEY UPDATE
             Value = VALUES(Value), Loaded_At = CURRENT_TIMESTAMP
     """)
@@ -56,12 +62,24 @@ def load_analysis(engine: Engine, frame: pd.DataFrame, *, replace_existing: bool
         INSERT INTO Dim_Company
             (Ticker_Code, Company_Name, Sector, Sub_Sector)
         VALUES (:Ticker, :CompanyName, :Sector, :SubSector)
+        ON CONFLICT (Ticker_Code) DO UPDATE SET
+            Company_Name = EXCLUDED.Company_Name,
+            Sector = EXCLUDED.Sector,
+            Sub_Sector = EXCLUDED.Sub_Sector
+    """ if engine.dialect.name == "postgresql" else """
+        INSERT INTO Dim_Company
+            (Ticker_Code, Company_Name, Sector, Sub_Sector)
+        VALUES (:Ticker, :CompanyName, :Sector, :SubSector)
         ON DUPLICATE KEY UPDATE
             Company_Name = VALUES(Company_Name),
             Sector = VALUES(Sector),
             Sub_Sector = VALUES(Sub_Sector)
     """)
     time_statement = text("""
+        INSERT INTO Dim_Time (Time_ID, Fiscal_Year)
+        VALUES (:Time_ID, :Fiscal_Year)
+        ON CONFLICT (Time_ID) DO UPDATE SET Fiscal_Year = EXCLUDED.Fiscal_Year
+    """ if engine.dialect.name == "postgresql" else """
         INSERT INTO Dim_Time (Time_ID, Fiscal_Year)
         VALUES (:Time_ID, :Fiscal_Year)
         ON DUPLICATE KEY UPDATE Fiscal_Year = VALUES(Fiscal_Year)
@@ -84,24 +102,53 @@ def load_analysis(engine: Engine, frame: pd.DataFrame, *, replace_existing: bool
             :Status_178, :Status_222, :Anomaly_Label, :Anomaly_Score
         FROM Dim_Company c
         WHERE c.Ticker_Code = :Ticker_Code
+        ON CONFLICT (Company_ID, Time_ID) DO UPDATE SET
+            Total_Revenue = EXCLUDED.Total_Revenue,
+            Total_Receivables = EXCLUDED.Total_Receivables,
+            Cost_of_Goods_Sold = EXCLUDED.Cost_of_Goods_Sold,
+            Gross_Profit = EXCLUDED.Gross_Profit,
+            Current_Assets = EXCLUDED.Current_Assets, Net_PPE = EXCLUDED.Net_PPE,
+            Total_Assets = EXCLUDED.Total_Assets,
+            Depreciation_Expense = EXCLUDED.Depreciation_Expense,
+            SGA_Expense = EXCLUDED.SGA_Expense,
+            Total_Liabilities = EXCLUDED.Total_Liabilities,
+            Net_Income = EXCLUDED.Net_Income,
+            Operating_Cash_Flow = EXCLUDED.Operating_Cash_Flow,
+            DSRI = EXCLUDED.DSRI, GMI = EXCLUDED.GMI, AQI = EXCLUDED.AQI,
+            SGI = EXCLUDED.SGI, DEPI = EXCLUDED.DEPI, SGAI = EXCLUDED.SGAI,
+            LVGI = EXCLUDED.LVGI, TATA = EXCLUDED.TATA, M_Score = EXCLUDED.M_Score,
+            Status_178 = EXCLUDED.Status_178, Status_222 = EXCLUDED.Status_222,
+            Anomaly_Label = EXCLUDED.Anomaly_Label,
+            Anomaly_Score = EXCLUDED.Anomaly_Score
+    """ if engine.dialect.name == "postgresql" else """
+        INSERT INTO Fact_Risk_Analysis (
+            Company_ID, Time_ID, Total_Revenue, Total_Receivables,
+            Cost_of_Goods_Sold, Gross_Profit, Current_Assets, Net_PPE,
+            Total_Assets, Depreciation_Expense, SGA_Expense,
+            Total_Liabilities, Net_Income, Operating_Cash_Flow,
+            DSRI, GMI, AQI, SGI, DEPI, SGAI, LVGI, TATA, M_Score,
+            Status_178, Status_222, Anomaly_Label, Anomaly_Score
+        )
+        SELECT
+            c.Company_ID, :Time_ID, :Total_Revenue, :Total_Receivables,
+            :Cost_of_Goods_Sold, :Gross_Profit, :Current_Assets, :Net_PPE,
+            :Total_Assets, :Depreciation_Expense, :SGA_Expense,
+            :Total_Liabilities, :Net_Income, :Operating_Cash_Flow,
+            :DSRI, :GMI, :AQI, :SGI, :DEPI, :SGAI, :LVGI, :TATA, :M_Score,
+            :Status_178, :Status_222, :Anomaly_Label, :Anomaly_Score
+        FROM Dim_Company c
+        WHERE c.Ticker_Code = :Ticker_Code
         ON DUPLICATE KEY UPDATE
-            Total_Revenue = VALUES(Total_Revenue),
-            Total_Receivables = VALUES(Total_Receivables),
-            Cost_of_Goods_Sold = VALUES(Cost_of_Goods_Sold),
-            Gross_Profit = VALUES(Gross_Profit),
-            Current_Assets = VALUES(Current_Assets), Net_PPE = VALUES(Net_PPE),
-            Total_Assets = VALUES(Total_Assets),
-            Depreciation_Expense = VALUES(Depreciation_Expense),
-            SGA_Expense = VALUES(SGA_Expense),
-            Total_Liabilities = VALUES(Total_Liabilities),
-            Net_Income = VALUES(Net_Income),
-            Operating_Cash_Flow = VALUES(Operating_Cash_Flow),
-            DSRI = VALUES(DSRI), GMI = VALUES(GMI), AQI = VALUES(AQI),
-            SGI = VALUES(SGI), DEPI = VALUES(DEPI), SGAI = VALUES(SGAI),
+            Total_Revenue = VALUES(Total_Revenue), Total_Receivables = VALUES(Total_Receivables),
+            Cost_of_Goods_Sold = VALUES(Cost_of_Goods_Sold), Gross_Profit = VALUES(Gross_Profit),
+            Current_Assets = VALUES(Current_Assets), Net_PPE = VALUES(Net_PPE), Total_Assets = VALUES(Total_Assets),
+            Depreciation_Expense = VALUES(Depreciation_Expense), SGA_Expense = VALUES(SGA_Expense),
+            Total_Liabilities = VALUES(Total_Liabilities), Net_Income = VALUES(Net_Income),
+            Operating_Cash_Flow = VALUES(Operating_Cash_Flow), DSRI = VALUES(DSRI), GMI = VALUES(GMI),
+            AQI = VALUES(AQI), SGI = VALUES(SGI), DEPI = VALUES(DEPI), SGAI = VALUES(SGAI),
             LVGI = VALUES(LVGI), TATA = VALUES(TATA), M_Score = VALUES(M_Score),
             Status_178 = VALUES(Status_178), Status_222 = VALUES(Status_222),
-            Anomaly_Label = VALUES(Anomaly_Label),
-            Anomaly_Score = VALUES(Anomaly_Score)
+            Anomaly_Label = VALUES(Anomaly_Label), Anomaly_Score = VALUES(Anomaly_Score)
     """)
 
     facts = pd.DataFrame({
@@ -141,17 +188,18 @@ def load_analysis(engine: Engine, frame: pd.DataFrame, *, replace_existing: bool
 def read_analysis(engine: Engine) -> pd.DataFrame:
     query = text("""
         SELECT
-            c.Ticker_Code AS Ticker,
-            c.Company_Name AS CompanyName,
-            c.Sector AS Sector,
-            c.Sub_Sector AS SubSector,
-            t.Fiscal_Year AS FiscalYear,
-            f.DSRI, f.GMI, f.AQI, f.SGI, f.DEPI, f.SGAI, f.LVGI, f.TATA,
-            f.M_Score AS MScore,
-            f.Status_178, f.Status_222,
-            f.Status_178 AS RiskLabel,
-            f.Anomaly_Score AS AnomalyScore,
-            f.Anomaly_Label AS AnomalyLabel
+            c.Ticker_Code AS "Ticker",
+            c.Company_Name AS "CompanyName",
+            c.Sector AS "Sector",
+            c.Sub_Sector AS "SubSector",
+            t.Fiscal_Year AS "FiscalYear",
+            f.DSRI AS "DSRI", f.GMI AS "GMI", f.AQI AS "AQI", f.SGI AS "SGI",
+            f.DEPI AS "DEPI", f.SGAI AS "SGAI", f.LVGI AS "LVGI", f.TATA AS "TATA",
+            f.M_Score AS "MScore",
+            f.Status_178 AS "Status_178", f.Status_222 AS "Status_222",
+            f.Status_178 AS "RiskLabel",
+            f.Anomaly_Score AS "AnomalyScore",
+            f.Anomaly_Label AS "AnomalyLabel"
         FROM Fact_Risk_Analysis f
         JOIN Dim_Company c ON c.Company_ID = f.Company_ID
         JOIN Dim_Time t ON t.Time_ID = f.Time_ID

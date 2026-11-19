@@ -35,10 +35,10 @@ def render_user_management(role: str) -> None:
         engine = create_mysql_engine()
         with engine.connect() as connection:
             users = connection.execute(text("""
-                SELECT User_ID, Username, Role, Is_Active
+                SELECT user_id AS "User_ID", username AS "Username", role AS "Role", is_active AS "Is_Active"
                 FROM App_Users
-                WHERE Username <> 'admin'
-                ORDER BY Username
+                WHERE username <> 'admin'
+                ORDER BY username
             """)).mappings().all()
     except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
         st.error(f"Daftar akun gagal dimuat: {exc}")

@@ -1,0 +1,64 @@
+CREATE TABLE IF NOT EXISTS App_Users (
+    User_ID BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Username VARCHAR(120) NOT NULL UNIQUE,
+    Password_Hash VARCHAR(255) NOT NULL,
+    Role VARCHAR(20) NOT NULL CHECK (Role IN ('Administrator', 'Stakeholder', 'User')),
+    Is_Active BOOLEAN NOT NULL DEFAULT TRUE,
+    Created_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Updated_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Stg_Financial_Statement (
+    Staging_ID BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Ticker_Code VARCHAR(20) NOT NULL,
+    Statement_Name VARCHAR(64) NOT NULL,
+    Item_Name VARCHAR(128) NOT NULL,
+    Fiscal_Year SMALLINT NOT NULL,
+    Value NUMERIC(20,2) NULL,
+    Loaded_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (Ticker_Code, Statement_Name, Item_Name, Fiscal_Year)
+);
+
+CREATE TABLE IF NOT EXISTS Dim_Company (
+    Company_ID INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Ticker_Code VARCHAR(20) NOT NULL UNIQUE,
+    Company_Name VARCHAR(150) NOT NULL,
+    Sector VARCHAR(100) NOT NULL,
+    Sub_Sector VARCHAR(100) NULL
+);
+
+CREATE TABLE IF NOT EXISTS Dim_Time (
+    Time_ID INTEGER PRIMARY KEY,
+    Fiscal_Year SMALLINT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS Fact_Risk_Analysis (
+    Company_ID INTEGER NOT NULL REFERENCES Dim_Company(Company_ID),
+    Time_ID INTEGER NOT NULL REFERENCES Dim_Time(Time_ID),
+    Total_Revenue NUMERIC(20,2) NULL,
+    Total_Receivables NUMERIC(20,2) NULL,
+    Cost_of_Goods_Sold NUMERIC(20,2) NULL,
+    Gross_Profit NUMERIC(20,2) NULL,
+    Current_Assets NUMERIC(20,2) NULL,
+    Net_PPE NUMERIC(20,2) NULL,
+    Total_Assets NUMERIC(20,2) NULL,
+    Depreciation_Expense NUMERIC(20,2) NULL,
+    SGA_Expense NUMERIC(20,2) NULL,
+    Total_Liabilities NUMERIC(20,2) NULL,
+    Net_Income NUMERIC(20,2) NULL,
+    Operating_Cash_Flow NUMERIC(20,2) NULL,
+    DSRI NUMERIC(12,6) NULL,
+    GMI NUMERIC(12,6) NULL,
+    AQI NUMERIC(12,6) NULL,
+    SGI NUMERIC(12,6) NULL,
+    DEPI NUMERIC(12,6) NULL,
+    SGAI NUMERIC(12,6) NULL,
+    LVGI NUMERIC(12,6) NULL,
+    TATA NUMERIC(12,6) NULL,
+    M_Score NUMERIC(12,6) NULL,
+    Status_178 VARCHAR(50) NOT NULL,
+    Status_222 VARCHAR(50) NOT NULL,
+    Anomaly_Label SMALLINT NULL,
+    Anomaly_Score NUMERIC(12,8) NULL,
+    PRIMARY KEY (Company_ID, Time_ID)
+);

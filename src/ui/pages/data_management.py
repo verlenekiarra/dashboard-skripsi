@@ -26,11 +26,12 @@ FACT_RESULT_COLUMNS = {
 
 def _rows(engine) -> pd.DataFrame:
     query = text("""
-        SELECT c.Ticker_Code AS Ticker, c.Company_Name AS CompanyName,
-               c.Sector, t.Fiscal_Year AS FiscalYear,
-               f.DSRI, f.GMI, f.AQI, f.SGI, f.DEPI, f.SGAI, f.LVGI, f.TATA,
-               f.M_Score AS MScore, f.Status_178 AS RiskLabel,
-               f.Anomaly_Label AS AnomalyLabel, f.Anomaly_Score AS AnomalyScore
+        SELECT c.Ticker_Code AS "Ticker", c.Company_Name AS "CompanyName",
+               c.Sector AS "Sector", t.Fiscal_Year AS "FiscalYear",
+               f.DSRI AS "DSRI", f.GMI AS "GMI", f.AQI AS "AQI", f.SGI AS "SGI",
+               f.DEPI AS "DEPI", f.SGAI AS "SGAI", f.LVGI AS "LVGI", f.TATA AS "TATA",
+               f.M_Score AS "MScore", f.Status_178 AS "RiskLabel",
+               f.Anomaly_Label AS "AnomalyLabel", f.Anomaly_Score AS "AnomalyScore"
         FROM Fact_Risk_Analysis f
         JOIN Dim_Company c ON c.Company_ID = f.Company_ID
         JOIN Dim_Time t ON t.Time_ID = f.Time_ID
@@ -108,20 +109,18 @@ def render_data_management(data: pd.DataFrame, role: str) -> None:
         try:
             with engine.begin() as connection:
                 connection.execute(text(f"""
-                    UPDATE Fact_Risk_Analysis f
-                    JOIN Dim_Company c ON c.Company_ID = f.Company_ID
-                    JOIN Dim_Time t ON t.Time_ID = f.Time_ID
-                    SET f.{database_column} = :value
-                    WHERE c.Ticker_Code = :ticker AND t.Fiscal_Year = :year
+                    UPDATE Fact_Risk_Analysis
+                    SET {database_column} = :value
+                    WHERE Company_ID = (SELECT Company_ID FROM Dim_Company WHERE Ticker_Code = :ticker)
+                      AND Time_ID = (SELECT Time_ID FROM Dim_Time WHERE Fiscal_Year = :year)
                 """), {"value": new_value, "ticker": selected_ticker, "year": selected_year})
                 if result_label == "M-Score":
                     connection.execute(text("""
-                        UPDATE Fact_Risk_Analysis f
-                        JOIN Dim_Company c ON c.Company_ID = f.Company_ID
-                        JOIN Dim_Time t ON t.Time_ID = f.Time_ID
-                        SET f.Status_178 = CASE WHEN f.M_Score > :baseline THEN 'Potential earnings manipulation' ELSE 'No potential earnings manipulation' END,
-                            f.Status_222 = CASE WHEN f.M_Score > :sensitivity THEN 'Potential earnings manipulation' ELSE 'No potential earnings manipulation' END
-                        WHERE c.Ticker_Code = :ticker AND t.Fiscal_Year = :year
+                        UPDATE Fact_Risk_Analysis
+                        SET Status_178 = CASE WHEN M_Score > :baseline THEN 'Potential earnings manipulation' ELSE 'No potential earnings manipulation' END,
+                            Status_222 = CASE WHEN M_Score > :sensitivity THEN 'Potential earnings manipulation' ELSE 'No potential earnings manipulation' END
+                        WHERE Company_ID = (SELECT Company_ID FROM Dim_Company WHERE Ticker_Code = :ticker)
+                          AND Time_ID = (SELECT Time_ID FROM Dim_Time WHERE Fiscal_Year = :year)
                     """), {"baseline": BASELINE_THRESHOLD, "sensitivity": SENSITIVITY_THRESHOLD, "ticker": selected_ticker, "year": selected_year})
             st.success(f"{result_label} untuk {selected_ticker} tahun {selected_year} diperbarui.")
             st.rerun()
