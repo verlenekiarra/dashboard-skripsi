@@ -1,10 +1,3 @@
-"""Theme tokens, global CSS, and chart palettes.
-
-The CSS here is copied verbatim from the original app.py. Base rules are
-injected first, then the per-theme token block overrides them. Keep that
-order: reversing it makes the token colors lose to the base defaults.
-"""
-
 from __future__ import annotations
 
 import streamlit as st
