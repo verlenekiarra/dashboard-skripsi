@@ -1,10 +1,3 @@
-"""Theme tokens, global CSS, and chart palettes.
-
-The CSS here is copied verbatim from the original app.py. Base rules are
-injected first, then the per-theme token block overrides them. Keep that
-order: reversing it makes the token colors lose to the base defaults.
-"""
-
 from __future__ import annotations
 
 import streamlit as st
@@ -81,9 +74,11 @@ div[data-testid="stForm"] { background: var(--surface); border: 1px solid var(--
 .st-key-data-management-delete-all button { background: #b42318 !important; color: #ffffff !important; border: none !important; }
 .st-key-data-management-delete-all button:hover { background: #8f1d14 !important; color: #ffffff !important; }
 .st-key-data-management-delete-all button p, .st-key-data-management-delete-all button span { color: #ffffff !important; }
-.nav-control [data-baseweb="segmented-control"] { width: 100%; background: var(--surface-alt); border: 1px solid var(--border); padding: .2rem; border-radius: 9px; }
-.nav-control [data-baseweb="segment"] { min-height: 34px; color: var(--text-muted); font-size: .78rem; }
-.nav-control [data-baseweb="segment"][aria-checked="true"] { background: var(--primary); color: #173B73; }
+.nav-control [data-baseweb="segmented-control"] { width: 100%; background: var(--nav-bg); border: 1px solid var(--border); padding: .2rem; border-radius: 10px; box-shadow: 0 4px 14px rgba(23,59,115,.08); }
+.nav-control [data-baseweb="segment"] { min-height: 34px; color: var(--nav-text); font-size: .78rem; border-radius: 7px; }
+.nav-control [data-baseweb="segment"]:nth-child(3n+1)[aria-checked="true"] { background: var(--nav-active-1); color: #ffffff; }
+.nav-control [data-baseweb="segment"]:nth-child(3n+2)[aria-checked="true"] { background: var(--nav-active-2); color: #ffffff; }
+.nav-control [data-baseweb="segment"]:nth-child(3n)[aria-checked="true"] { background: var(--nav-active-3); color: #ffffff; }
 .sidebar-brand { padding: .4rem .7rem 1.25rem; color: var(--text); font-weight: 700; font-size: 1.05rem; }
 .sidebar-label { padding: 1.1rem .7rem .35rem; color: var(--text-muted); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .stDownloadButton>button { background: var(--surface); color: var(--text) !important; border: 1px solid var(--border); }
@@ -98,6 +93,7 @@ div[data-testid="stForm"] { background: var(--surface); border: 1px solid var(--
 [data-baseweb="input"] input::placeholder, [data-baseweb="base-input"] input::placeholder, [data-baseweb="textarea"] textarea::placeholder { color: var(--input-text) !important; -webkit-text-fill-color: var(--input-text) !important; opacity: .7 !important; }
 [data-baseweb="select"] [class*="singleValue"], [data-baseweb="select"] [class*="SingleValue"] { color: var(--input-text) !important; -webkit-text-fill-color: var(--input-text) !important; }
 .stMultiSelectTagsContainer, .stMultiSelectTagsContainer *, .stMultiSelectTagsContainer svg { color: var(--tag-text) !important; fill: var(--tag-text) !important; -webkit-text-fill-color: var(--tag-text) !important; }
+.stMultiSelectTagsContainer { background: var(--tag-bg) !important; border-radius: 7px; }
 [aria-selected="true"], [data-baseweb="option"][aria-selected="true"] { background: var(--option-bg) !important; color: var(--option-text) !important; -webkit-text-fill-color: var(--option-text) !important; }
 .stAlert { background: var(--surface-alt); border-color: var(--border); }
 .stAlert [data-testid="stAlertContent"] { color: var(--text) !important; }
@@ -110,8 +106,8 @@ div[data-testid="stForm"] { background: var(--surface); border: 1px solid var(--
 """
 
 THEME_TOKENS = {
-    "light": "--bg:#e7f3ff;--surface:#ffffff;--surface-alt:#d9edff;--border:#b8d4ed;--border-strong:#8fb5d8;--text:#173b73;--text-muted:#365985;--primary:#bde0fe;--accent-soft:#d9edff;--input-bg:#ffffff;--input-text:#173b73;--input-outline:#9bb3cc;--tag-bg:#173b73;--tag-text:#ffffff;--option-bg:#bde0fe;--option-text:#173b73;--btn-bg:#bde0fe;--btn-fg:#173b73;--btn-hover:#a7d3f5;",
-    "dark": "--bg:#0b1f3a;--surface:#173b73;--surface-alt:#102d55;--border:#315783;--border-strong:#6b93c4;--text:#ffffff;--text-muted:#d6e5f7;--primary:#bde0fe;--accent-soft:#102d55;--input-bg:#2b5a96;--input-text:#ffffff;--input-outline:#ffffff;--tag-bg:#173b73;--tag-text:#ffffff;--option-bg:#2b5a96;--option-text:#ffffff;--btn-bg:#bde0fe;--btn-fg:#173b73;--btn-hover:#d5ecff;",
+    "light": "--bg:#eaf7ff;--surface:#ffffff;--surface-alt:#dff3ff;--border:#b9dced;--border-strong:#83b9d5;--text:#173b73;--text-muted:#365985;--primary:#3b82f6;--accent-soft:#dff3ff;--input-bg:#ffffff;--input-text:#173b73;--input-outline:#83b9d5;--tag-bg:#bde0fe;--tag-text:#173b73;--option-bg:#bde0fe;--option-text:#173b73;--nav-bg:#f4fbff;--nav-text:#365985;--nav-active-1:#2563eb;--nav-active-2:#0f9f9a;--nav-active-3:#e07a24;--btn-bg:#3b82f6;--btn-fg:#ffffff;--btn-hover:#1d4ed8;",
+    "dark": "--bg:#091a33;--surface:#102d55;--surface-alt:#173b73;--border:#315783;--border-strong:#6b93c4;--text:#ffffff;--text-muted:#d6e5f7;--primary:#60a5fa;--accent-soft:#173b73;--input-bg:#2b5a96;--input-text:#ffffff;--input-outline:#ffffff;--tag-bg:#173b73;--tag-text:#ffffff;--option-bg:#2b5a96;--option-text:#ffffff;--nav-bg:#0d2548;--nav-text:#d6e5f7;--nav-active-1:#2563eb;--nav-active-2:#0f9f9a;--nav-active-3:#c7661f;--btn-bg:#60a5fa;--btn-fg:#09203d;--btn-hover:#93c5fd;",
 }
 
 
