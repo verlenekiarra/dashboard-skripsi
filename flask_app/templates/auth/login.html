@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Financial Risk Analytics{% endblock %}
+{% block body %}
+<main class="auth-shell">
+  <section class="auth-card">
+    <p class="eyebrow">FINANCIAL RISK ANALYTICS</p>
+    <h1>Manipulation Fraud Risk Dashboard</h1>
+    <p class="muted">Dashboard analitik risiko manipulasi laporan keuangan</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}
+    {% endwith %}
+    <form method="post" class="stack">
+      <label>Username<input name="username" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">Sign in</button>
+    </form>
+    <p class="muted small">Pengguna Stakeholder atau User yang memerlukan akses dapat menghubungi Administrator.</p>
+  </section>
+</main>
+{% endblock %}
