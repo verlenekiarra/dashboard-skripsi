@@ -12,11 +12,11 @@ def render_priority_table(data: pd.DataFrame) -> None:
     ranked = data.dropna(subset=["RiskRank"]).sort_values("RiskRank").head(5)
     st.markdown('<p class="section-title">Top 5 Company List by Risk</p>', unsafe_allow_html=True)
     if ranked.empty:
-        st.info("Belum ada observasi yang dapat diberi peringkat. Semua baris berstatus insufficient data.")
+        st.info("No observations can be ranked. All rows have insufficient data.")
         return
     columns = ["RiskRank", "Ticker", "CompanyName", "FiscalYear", "MScore", "AnomalyScore", "ScreeningPriority"]
     st.dataframe(ranked[[c for c in columns if c in ranked.columns]], width="stretch", hide_index=True, column_config=RANK_COLUMN_CONFIG)
-    st.caption("Peringkat adalah urutan review bertingkat, bukan skor komposit atau bukti fraud.")
+    st.caption("This is a review order, not a composite risk score or proof of fraud.")
 
 
 def render_companies_table(data: pd.DataFrame) -> None:

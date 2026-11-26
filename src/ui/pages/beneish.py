@@ -21,8 +21,8 @@ def render_beneish_page(data: pd.DataFrame) -> None:
         render_mscore_distribution(data)
     with col2:
         render_mscore_trend(data)
-    st.info("Delapan indeks adalah sinyal dalam model Beneish. Status screening bukan bukti manipulasi laporan keuangan.")
-    st.caption("DSRI: piutang terhadap penjualan. GMI: gross margin. AQI: kualitas aset. SGI: pertumbuhan penjualan. DEPI: depresiasi. SGAI: beban penjualan dan administrasi. LVGI: leverage. TATA: akrual terhadap aset.")
+    st.info("The eight indices are signals in the Beneish model. Screening status is not proof of financial statement manipulation.")
+    st.caption("DSRI: receivables relative to sales. GMI: gross margin. AQI: asset quality. SGI: sales growth. DEPI: depreciation. SGAI: selling and administrative expenses. LVGI: leverage. TATA: accruals relative to assets.")
     st.markdown('<p class="section-title">Detailed Indices</p>', unsafe_allow_html=True)
     index_cols = ["Ticker", "CompanyName", "FiscalYear", "DSRI", "GMI", "AQI", "SGI", "DEPI", "SGAI", "LVGI", "TATA", "MScore", "RiskLabel"]
     available = [c for c in index_cols if c in data.columns]

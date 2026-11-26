@@ -22,9 +22,9 @@ def render_company_analysis(data: pd.DataFrame) -> None:
     with left:
         fig = px.line(company, x="FiscalYear", y="MScore", markers=True)
         fig.add_hline(y=BASELINE_THRESHOLD, line_dash="dash", line_color=palette["baseline"])
-        st.plotly_chart(chart_layout(fig, "M-Score by year", palette), width="stretch")
+        st.plotly_chart(chart_layout(fig, "M-Score by year", palette), width="stretch", config={"displaylogo": False, "responsive": True})
     with right:
         fig = px.line(company, x="FiscalYear", y="AnomalyScore", markers=True)
-        st.plotly_chart(chart_layout(fig, "Anomaly Score by year", palette), width="stretch")
+        st.plotly_chart(chart_layout(fig, "Anomaly Score by year", palette), width="stretch", config={"displaylogo": False, "responsive": True})
     index_cols = ["Ticker", "CompanyName", "FiscalYear", "DSRI", "GMI", "AQI", "SGI", "DEPI", "SGAI", "LVGI", "TATA", "MScore", "AnomalyScore"]
     st.dataframe(company[[column for column in index_cols if column in company.columns]], width="stretch", hide_index=True)

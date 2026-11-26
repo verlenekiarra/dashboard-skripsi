@@ -51,16 +51,16 @@ def _delete_fact_record(engine, ticker: str, year: int) -> None:
 
 
 def _delete_fact_dialog(engine, ticker: str, year: int) -> None:
-    @st.dialog("Konfirmasi delete")
+    @st.dialog("Confirm deletion")
     def confirm():
-        st.warning(f"Hapus hasil Fact_Risk_Analysis untuk {ticker} tahun {year}?")
-        st.caption("Raw staging tetap tersimpan.")
+        st.warning(f"Delete the Fact_Risk_Analysis result for {ticker} in {year}?")
+        st.caption("Raw staging data will remain stored.")
         left, right = st.columns(2)
         if left.button("Cancel", key="cancel_fact_delete"):
             st.rerun()
         if right.button("Yes, delete", key="confirm_fact_delete_dialog"):
             _delete_fact_record(engine, ticker, year)
-            st.success("Hasil fact dihapus.")
+            st.success("Fact result deleted.")
             st.rerun()
     confirm()
 
@@ -68,14 +68,14 @@ def _delete_fact_dialog(engine, ticker: str, year: int) -> None:
 def render_data_management(data: pd.DataFrame, role: str) -> None:
     st.markdown("### Data Management")
     if not allowed(role, "manage_system"):
-        st.error("Akses ditolak. Data Management hanya untuk Administrator.")
+        st.error("Access denied. Data Management is available to Administrators only.")
         return
-    st.caption("Pengelolaan data perusahaan dan company-year. Perubahan database memerlukan konfirmasi.")
+    st.caption("Manage company and company-year records. Database changes require confirmation.")
     try:
         engine = create_mysql_engine()
         rows = _rows(engine)
     except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
-        st.error(f"Data gagal dimuat: {exc}")
+        st.error(f"Failed to load data: {exc}")
         return
 
     c1, c2, c3 = st.columns(3)
@@ -85,10 +85,10 @@ def render_data_management(data: pd.DataFrame, role: str) -> None:
 
     st.markdown('<p class="section-title">Company-year data</p>', unsafe_allow_html=True)
     if rows.empty:
-        st.info("Belum ada company-year data.")
+        st.info("No company-year data is available.")
         return
     selected = st.selectbox(
-        "Pilih ticker dan tahun",
+        "Select ticker and year",
         rows.index,
         format_func=lambda i: f"{rows.loc[i, 'Ticker']} · {rows.loc[i, 'CompanyName']} · {int(rows.loc[i, 'FiscalYear'])}",
         key="data_fact_row",
@@ -97,12 +97,12 @@ def render_data_management(data: pd.DataFrame, role: str) -> None:
     selected_year = int(rows.loc[selected, "FiscalYear"])
 
     st.caption(f"Company: {rows.loc[selected, 'CompanyName']}")
-    result_label = st.selectbox("Pilih kolom hasil analisis", list(FACT_RESULT_COLUMNS), key="fact_result_column")
+    result_label = st.selectbox("Select analysis result column", list(FACT_RESULT_COLUMNS), key="fact_result_column")
     database_column = FACT_RESULT_COLUMNS[result_label]
     current_value = rows.loc[selected, "MScore" if result_label == "M-Score" else "AnomalyScore" if result_label == "Anomaly Score" else result_label]
     default_value = 0.0 if pd.isna(current_value) else float(current_value)
-    new_value = st.number_input("Nilai baru", value=default_value, format="%.8f", key="fact_new_value")
-    confirm_update = st.checkbox("Konfirmasi update nilai hasil analisis", key="confirm_fact_update")
+    new_value = st.number_input("New value", value=default_value, format="%.8f", key="fact_new_value")
+    confirm_update = st.checkbox("Confirm analysis result update", key="confirm_fact_update")
     with st.form("update_fact_result"):
         update_result = st.form_submit_button("Update analysis result", disabled=not confirm_update)
     if update_result:
@@ -122,17 +122,17 @@ def render_data_management(data: pd.DataFrame, role: str) -> None:
                         WHERE Company_ID = (SELECT Company_ID FROM Dim_Company WHERE Ticker_Code = :ticker)
                           AND Time_ID = (SELECT Time_ID FROM Dim_Time WHERE Fiscal_Year = :year)
                     """), {"baseline": BASELINE_THRESHOLD, "sensitivity": SENSITIVITY_THRESHOLD, "ticker": selected_ticker, "year": selected_year})
-            st.success(f"{result_label} untuk {selected_ticker} tahun {selected_year} diperbarui.")
+            st.success(f"{result_label} for {selected_ticker} in {selected_year} was updated.")
             st.rerun()
         except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
-            st.error(f"Update gagal: {exc}")
+            st.error(f"Update failed: {exc}")
 
-    confirm = st.checkbox(f"Konfirmasi hapus hasil fact {selected_ticker} tahun {selected_year}", key="confirm_fact_delete")
+    confirm = st.checkbox(f"Confirm deletion of the fact result for {selected_ticker} in {selected_year}", key="confirm_fact_delete")
     with st.container(key="data-management-delete"):
         if st.button("Delete Company - Year", disabled=not confirm, key="delete_fact"):
             try:
                 _delete_fact_dialog(engine, selected_ticker, selected_year)
             except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
-                st.error(f"Delete gagal. Hak DELETE database mungkin belum tersedia: {exc}")
+                st.error(f"Delete failed. Database DELETE permission may not be available: {exc}")
 
     st.dataframe(rows, width="stretch", hide_index=True)

@@ -1,5 +1,3 @@
-"""Data loading. MySQL first, local workbook as fallback."""
-
 from __future__ import annotations
 
 from io import BytesIO

@@ -8,7 +8,7 @@ from src.ui.components.charts import render_anomaly_distribution
 
 def render_anomaly_page(data: pd.DataFrame) -> None:
     st.markdown("### Anomaly Detection")
-    st.caption("Isolation Forest identifies unusual financial patterns. Higher score = more anomalous.")
+    st.caption("Isolation Forest identifies unusual financial patterns. A higher score indicates a relatively less common observation.")
     total_anomalies = int(data["AnomalyLabel"].eq(-1).sum())
     normal = int(data["AnomalyLabel"].eq(1).sum())
     insufficient = int(data["AnomalyStatus"].eq("Insufficient data / not calculable").sum())
@@ -18,7 +18,7 @@ def render_anomaly_page(data: pd.DataFrame) -> None:
     c3.metric("Insufficient Data", f"{insufficient:,}")
     c4.metric("Anomaly proportion", f"{total_anomalies / len(data):.1%}" if len(data) else "N/A")
     render_anomaly_distribution(data)
-    st.info("Anomaly Score bukan probabilitas. Nilai lebih tinggi berarti observasi relatif lebih tidak biasa dalam distribusi yang dipelajari model.")
+    st.info("Anomaly Score is not a probability. A higher value indicates a relatively less common observation in the learned distribution.")
     st.markdown('<p class="section-title">Anomaly Results</p>', unsafe_allow_html=True)
     anomaly_cols = ["Ticker", "CompanyName", "FiscalYear", "DSRI", "GMI", "AQI", "SGI", "DEPI", "SGAI", "LVGI", "TATA", "MScore", "AnomalyScore", "AnomalyLabel", "AnomalyStatus", "ScreeningPriority"]
     available = [c for c in anomaly_cols if c in data.columns]

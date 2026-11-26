@@ -2,21 +2,18 @@
 
 from __future__ import annotations
 
+from html import escape
+
 import pandas as pd
 import streamlit as st
 
 
 def render_header(data: pd.DataFrame, role: str, page: str) -> pd.DataFrame:
-    title, year_col, company_col, user_col = st.columns([2.1, 1.2, 1.5, 1.1])
-    with title:
-        st.markdown("### Manipulation Fraud Risk Dashboard")
-        st.caption(page)
+    band = st.empty()
+    year_col, company_col, filter_col1, filter_col2 = st.columns([1.3, 1.3, 1.1, 1.1])
     with year_col:
         years = sorted(data["FiscalYear"].dropna().astype(int).unique().tolist())
-        selected_years = st.multiselect("Year", years, default=years, placeholder="Filter by year")
-    with user_col:
-        st.markdown(f'<div class="user-chip"><span class="user-role">{role}</span><span class="user-scope">{"Full access" if role == "Administrator" else "Upload and export" if role == "Stakeholder" else "View only"}</span></div>', unsafe_allow_html=True)
-    filter_col1, filter_col2, filter_col3 = st.columns([1.2, 1.2, 1.5])
+        selected_years = st.multiselect("Year", years, default=years, placeholder="Filter by year", key="header_year_filter")
     with filter_col1:
         subsectors = sorted(data["SubSector"].dropna().astype(str).unique().tolist()) if "SubSector" in data else []
         selected_subsectors = st.multiselect("Subsector", subsectors, placeholder="All subsectors")
@@ -34,13 +31,21 @@ def render_header(data: pd.DataFrame, role: str, page: str) -> pd.DataFrame:
     if selected_statuses:
         filtered = filtered[filtered["RiskLabel"].isin(selected_statuses)]
     active = []
-    if selected_years:
-        active.append(f"{len(selected_years)} year(s)")
     if selected_tickers:
-        active.append(f"{len(selected_tickers)} company(s)")
+        active.append(f"{len(selected_tickers)} company")
     if selected_subsectors:
-        active.append(f"{len(selected_subsectors)} subsector(s)")
+        active.append(f"{len(selected_subsectors)} subsector")
     if selected_statuses:
-        active.append(f"{len(selected_statuses)} status(es)")
-    st.caption("Active filter: " + (", ".join(active) if active else "none"))
+        active.append(f"{len(selected_statuses)} status")
+    scope = {"Administrator": "Full access", "Stakeholder": "Upload and export"}.get(role, "View only")
+    period = f"{min(selected_years)}–{max(selected_years)}" if selected_years else "No year"
+    chips = "".join(f'<span class="hb-chip">{escape(item)}</span>' for item in active) or '<span class="hb-chip hb-chip-muted">No extra filters</span>'
+    band.markdown(
+        f'<div class="header-band"><div class="hb-main"><div class="hb-kicker">{escape(role)} · {scope}</div>'
+        f'<h2 class="hb-title">{escape(page)}</h2><div class="hb-chips">{chips}</div></div>'
+        f'<div class="hb-stats"><div class="hb-stat hb-blue"><span>Period</span><strong>{period}</strong></div>'
+        f'<div class="hb-stat hb-teal"><span>Companies</span><strong>{filtered["Ticker"].nunique():,}</strong></div>'
+        f'<div class="hb-stat hb-violet"><span>Observations</span><strong>{len(filtered):,}</strong></div></div></div>',
+        unsafe_allow_html=True,
+    )
     return filtered

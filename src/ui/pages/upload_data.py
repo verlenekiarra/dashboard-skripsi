@@ -41,7 +41,7 @@ def _read_tabular(content: bytes, filename: str) -> pd.DataFrame:
 def _try_report(content: bytes, filename: str) -> tuple[pd.DataFrame | None, list[str], str]:
     """Attempt every sheet as a printed report. Returns (data, sheets, error)."""
     if filename.lower().endswith(".csv"):
-        return None, [], "CSV tidak memuat layout laporan."
+        return None, [], "CSV does not contain a report layout."
     try:
         sheets = _sheet_names(content, filename)
     except (OSError, ValueError) as exc:
@@ -63,38 +63,38 @@ def _render_report_review(report: pd.DataFrame, ticker: str) -> None:
     all_years = sorted(report["FiscalYear"].unique().tolist())
     pick_statement, pick_years = st.columns([1.2, 1.8])
     with pick_statement:
-        statement = st.selectbox("Laporan", statements, key="upload_report_statement")
+        statement = st.selectbox("Statement", statements, key="upload_report_statement")
     with pick_years:
-        years = st.multiselect("Periode", all_years, default=all_years, key="upload_report_years")
+        years = st.multiselect("Period", all_years, default=all_years, key="upload_report_years")
     if not years:
-        st.warning("Pilih minimal satu periode untuk menampilkan laporan.")
+        st.warning("Select at least one period to display the report.")
         return
     years = sorted(years)
-    st.markdown('<p class="section-title">Laporan sesuai sumber</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Source report</p>', unsafe_allow_html=True)
     render_report_matrix(report, statement, years)
     render_report_change(report, statement, years)
     render_report_trend(report, statement, years)
 
 
 def _render_mapping(mapping, ticker: str) -> None:
-    st.markdown('<p class="section-title">Pemetaan ke input Beneish</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Beneish input mapping</p>', unsafe_allow_html=True)
     rows = [
-        {"Input model": column, "Akun sumber": source}
+        {"Model input": column, "Source account": source}
         for column, source in mapping.resolved.items()
     ]
     for column in mapping.unresolved:
-        rows.append({"Input model": column, "Akun sumber": "tidak ditemukan"})
+        rows.append({"Model input": column, "Source account": "Not found"})
     st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
     if mapping.unresolved:
         st.error(
-            "Input berikut tidak ditemukan pada laporan: "
+            "The following inputs were not found in the report: "
             + ", ".join(mapping.unresolved)
-            + ". Beneish M-Score tidak dapat dihitung tanpa akun tersebut."
+            + ". Beneish M-Score cannot be calculated without these accounts."
         )
 
 
 def _render_analysis(analyzed: pd.DataFrame, training_size: int, population_rows: int) -> None:
-    st.markdown('<p class="section-title">Hasil analisis</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Analysis results</p>', unsafe_allow_html=True)
     columns = [
         "Ticker", "FiscalYear", "DSRI", "GMI", "AQI", "SGI", "DEPI", "SGAI", "LVGI", "TATA",
         "MScore", "RiskLabel", "AnomalyScore", "AnomalyLabel", "AnomalyStatus", "ScreeningPriority",
@@ -103,7 +103,7 @@ def _render_analysis(analyzed: pd.DataFrame, training_size: int, population_rows
     st.dataframe(
         analyzed[available], width="stretch", hide_index=True,
         column_config={
-            "FiscalYear": st.column_config.NumberColumn("Periode", format="%d"),
+            "FiscalYear": st.column_config.NumberColumn("Period", format="%d"),
             "MScore": st.column_config.NumberColumn("M-Score", format="%.4f"),
             "AnomalyScore": st.column_config.NumberColumn("Anomaly Score", format="%.4f"),
             "RiskLabel": "M-Score Status",
@@ -113,18 +113,18 @@ def _render_analysis(analyzed: pd.DataFrame, training_size: int, population_rows
     )
     if population_rows:
         st.caption(
-            f"Isolation Forest dilatih pada {training_size:,} observasi: "
-            f"{population_rows:,} observasi tersimpan ditambah observasi dari file ini. "
-            "Populasi pembanding diperlukan karena model tidak dapat menilai keanehan dari satu perusahaan saja."
+            f"Isolation Forest was trained on {training_size:,} observations: "
+            f"{population_rows:,} stored observations plus observations from this file. "
+            "A comparison population is required because the model cannot assess unusualness from one company alone."
         )
     else:
         st.warning(
-            "Belum ada observasi tersimpan sebagai populasi pembanding, sehingga Isolation Forest "
-            "hanya dilatih pada file ini. Label anomaly pada kondisi ini belum bermakna."
+            "No stored observations are available as a comparison population, so Isolation Forest "
+            "was trained only on this file. Anomaly labels are not meaningful in this condition."
         )
     st.caption(
-        "Tahun pertama setiap perusahaan berstatus insufficient data karena indeks Beneish "
-        "membutuhkan tahun pembanding."
+        "The first year for each company has insufficient data because Beneish indices "
+        "require a comparison year."
     )
 
 
@@ -136,16 +136,16 @@ def _save(analyzed: pd.DataFrame, content: bytes, filename: str, staging_frame: 
     loaded = load_analysis(engine, analyzed)
     st.session_state.pop("financial_data", None)
     st.session_state.pop("analysis_data", None)
-    st.success(f"Proses selesai: {staged:,} staging, {loaded:,} hasil analisis.")
+    st.success(f"Process complete: {staged:,} staging records, {loaded:,} analysis results.")
 
 
 def _render_report_flow(content: bytes, filename: str, report: pd.DataFrame) -> None:
     st.success(
-        f"Format laporan terdeteksi. {report['Statement'].nunique()} laporan, "
-        f"{report['AccountName'].nunique():,} akun, "
-        f"periode {report['FiscalYear'].min()}-{report['FiscalYear'].max()}."
+        f"Report format detected. {report['Statement'].nunique()} statements, "
+        f"{report['AccountName'].nunique():,} accounts, "
+        f"period {report['FiscalYear'].min()}-{report['FiscalYear'].max()}."
     )
-    ticker = st.text_input("Kode perusahaan", value=st.session_state.get(REPORT_TICKER, "TEST"), key="upload_report_code")
+    ticker = st.text_input("Company ticker", value=st.session_state.get(REPORT_TICKER, "TEST"), key="upload_report_code")
     ticker = ticker.strip() or "TEST"
     st.session_state[REPORT_TICKER] = ticker
 
@@ -165,7 +165,7 @@ def _render_report_flow(content: bytes, filename: str, report: pd.DataFrame) -> 
     _render_analysis(analyzed, training_size, population_rows)
 
     confirmed = st.checkbox(
-        "Saya sudah memeriksa laporan, pemetaan akun, dan hasil analisis.",
+        "I have reviewed the report, account mapping, and analysis results.",
         key="confirm_report_upload",
     )
     with st.form("process_report_upload"):
@@ -174,14 +174,14 @@ def _render_report_flow(content: bytes, filename: str, report: pd.DataFrame) -> 
         try:
             _save(analyzed, content, filename, None)
         except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
-            st.error(f"Penyimpanan gagal: {exc}")
+            st.error(f"Save failed: {exc}")
 
 
 def _render_tabular_flow(content: bytes, filename: str, financial: pd.DataFrame) -> None:
-    st.success(f"File valid. {len(financial):,} baris siap ditinjau.")
+    st.success(f"Valid file. {len(financial):,} rows are ready for review.")
     st.dataframe(financial.head(100), width="stretch", hide_index=True)
     confirmed = st.checkbox(
-        "Saya sudah memeriksa preview dan menyetujui pemrosesan file ini.",
+        "I have reviewed the preview and approve processing this file.",
         key="confirm_table_upload",
     )
     with st.form("process_table_upload"):
@@ -196,19 +196,19 @@ def _render_tabular_flow(content: bytes, filename: str, financial: pd.DataFrame)
                 staging_frame = read_workbook_long(raw_source)
             _save(analyzed, content, filename, staging_frame)
         except (OSError, ValueError, RuntimeError, SQLAlchemyError) as exc:
-            st.error(f"Pemrosesan gagal: {exc}")
+            st.error(f"Processing failed: {exc}")
 
 
 def render_upload_page(role: str) -> None:
     st.markdown("### Upload Financial Data")
     if not allowed(role, "upload"):
-        st.error("Akses ditolak. User tidak dapat mengunggah data.")
+        st.error("Access denied. Users cannot upload data.")
         return
-    st.caption("Format: XLSX, XLS, atau CSV. Laporan keuangan dan tabel data keduanya diterima; format dideteksi otomatis.")
-    st.info("Upload minimal 2 tahun laporan untuk setiap perusahaan. Perhitungan indeks Beneish membutuhkan tahun pembanding.")
+    st.caption("Formats: XLSX, XLS, or CSV. Financial statements and tabular data are accepted; format is detected automatically.")
+    st.info("Upload at least 2 reporting years for each company. Beneish index calculations require a comparison year.")
     uploaded = st.file_uploader("Financial statement workbook", type=["xlsx", "xls", "csv"])
     if uploaded is None:
-        st.info("Pilih file untuk melihat preview. Database belum berubah.")
+        st.info("Choose a file to view its preview. The database has not changed.")
         return
 
     content = uploaded.getvalue()
@@ -228,11 +228,11 @@ def render_upload_page(role: str) -> None:
     report, sheets, report_error = _try_report(content, filename)
     if report is not None:
         if len(sheets) > 1:
-            st.caption("Workbook memuat beberapa sheet. Sheet pertama yang berformat laporan dipakai.")
+            st.caption("The workbook contains multiple sheets. The first sheet with a valid report format will be used.")
         _render_report_flow(content, filename, report)
         return
 
-    st.error("File tidak dikenali sebagai tabel data maupun laporan keuangan.")
-    st.caption(f"Format tabel: {tabular_error}")
+    st.error("The file was not recognized as tabular data or a financial report.")
+    st.caption(f"Tabular format: {tabular_error}")
     if report_error:
-        st.caption(f"Format laporan: {report_error}")
+        st.caption(f"Report format: {report_error}")

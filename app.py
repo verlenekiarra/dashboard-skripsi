@@ -38,18 +38,18 @@ def main() -> None:
     data = load_data()
     if data.empty:
         st.markdown("### Manipulation Fraud Risk Dashboard")
-        st.info("Belum ada data. Upload workbook untuk memulai.")
-        st.markdown('<div class="note-box">Hasil analisis adalah indikasi screening awal, bukan bukti fraud.</div>', unsafe_allow_html=True)
+        st.info("No data is available. Upload a workbook to begin.")
+        st.markdown('<div class="note-box">Screening results support review. No status proves fraud or financial statement manipulation.</div>', unsafe_allow_html=True)
         return
-    filtered = render_header(data, role, page)
+    filtered = data if page in {"Data Management", "User Management"} else render_header(data, role, page)
     if filtered.empty:
-        st.warning("Tidak ada observasi sesuai filter aktif. Tambah tahun atau hapus filter perusahaan.")
+        st.warning("No observations match the active filters. Add a year or clear the company filter.")
         return
     stored_analysis = {"MScore", "Status_178", "Status_222", "AnomalyScore", "AnomalyLabel"}.issubset(filtered.columns)
     analyzed = filtered if stored_analysis else analyze(filtered, AnalysisConfig())
     st.session_state["analysis_data"] = analyzed
     if not allowed(role, "analyze"):
-        st.caption("View-only mode. Data dihitung tanpa mengubah sumber.")
+        st.caption("View-only mode. Data is calculated without changing the source.")
     if page == "Overview":
         render_overview(analyzed)
     elif page == "Beneish M-Score":
@@ -68,7 +68,7 @@ def main() -> None:
         render_data_management(analyzed, role)
     elif page == "User Management":
         render_user_management(role)
-    st.markdown('<div class="note-box">Status screening membantu memprioritaskan review. Status apa pun tidak membuktikan fraud.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="note-box">Screening results help prioritize review. No status proves fraud or financial statement manipulation.</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

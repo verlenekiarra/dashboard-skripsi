@@ -10,7 +10,7 @@ from src.ui.config import RANK_COLUMN_CONFIG
 
 def render_risk_assessment(data: pd.DataFrame) -> None:
     st.markdown("### Risk Assessment")
-    st.caption("Dua hasil screening ditampilkan berdampingan. Tidak ada composite risk score.")
+    st.caption("The two screening results are shown side by side. No composite risk score is created.")
     view = data.copy()
     view["ScreeningCategory"] = screening_category(view)
     columns = ["Ticker", "CompanyName", "FiscalYear", "RiskLabel", "AnomalyStatus", "ScreeningCategory", "MScore", "AnomalyScore"]
